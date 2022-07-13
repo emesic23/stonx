@@ -7,6 +7,8 @@ use log::info;
 use async_trait::async_trait;
 // use alpaca_finance::{Account, Alpaca, TimeInForce, OrderType, Order, Streamer, StreamMessage};
 use futures::{future, StreamExt};
+use yahoo_finance_api as yahoo;
+use yahoo::Quote;
 
 pub struct TradingBot {
     pub trading_config: TradingConfig,
@@ -76,6 +78,7 @@ pub trait Market{
     async fn get_market_price(&self, ticker: &str) -> Result<f64, Box<dyn Error>>;
     async fn place_sell_order(&self, ticker: &str, amount: u32, price: f64) -> Result<f64, Box<dyn Error>>;
     async fn place_buy_order(&self, ticker: &str, amount: u32, price: f64) -> Result<f64, Box<dyn Error>>;
+    async fn get_history(&self, ticker: &str, period: &str, duration: &str) -> Result<Vec<Quote>, Box<dyn Error>>;
 }
 
 
@@ -93,6 +96,7 @@ impl Market for TradingBot {
         let response = provider.get_latest_quotes(ticker, "1m").await.unwrap();
         let quote = response.last_quote().unwrap();
         println!("GOT QUOTE");
+        quote.
         Ok(quote.close)
     }
 
@@ -104,5 +108,12 @@ impl Market for TradingBot {
     async fn place_buy_order(&self, ticker: &str, amount: u32, price: f64) -> Result<f64, Box<dyn Error>>{
         let order = Order::buy(ticker, amount, OrderType::Limit, TimeInForce::DAY).limit_price(price).place(&self.alpaca).await.unwrap();
         Ok(order.filled_avg_price.unwrap())
+    }
+
+    async fn get_history(&self, ticker: &str, period: &str, duration: &str) -> Result<Vec<Quote>, Box<dyn Error>> {
+        let provider = yahoo::YahooConnector::new();
+        let response = provider.get_quote_range(ticker, period, duration).await.unwrap();
+        let quotes = response.quotes().unwrap();
+        Ok(quotes)
     }
 }

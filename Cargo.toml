@@ -18,3 +18,4 @@ tokio = {version = "0.2.25", features = ["full"]}
 async-trait = "0.1.56"
 alpaca-finance = "0.2.1"
 futures = "0.3.21"
+yata = "0.6.1"
